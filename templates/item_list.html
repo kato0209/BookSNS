@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% load widget_tweaks%}
+{% load static %}
+
+{% block head %}
+<link href="{% static 'Itemlist.css' %}" rel="stylesheet"> 
+{% endblock head %}
+{% block content %}
+<div class="text-center my-5">
+    <form method="post" action="{% url 'SearchItem' From %}" class="d-flex" id="Search_form">{% csrf_token %}
+        <div class="align-items-center w-100">
+            {% render_field form.title class="form-control" placeholder="キーワードから探す"%}
+        </div>
+        {{ form.category}}
+        {{ form.page_number }}
+        <button class="btn btn-success" type="submit">検索</button>
+    </form>
+</div>
+<div class="container my-5">
+    <div class="mb-5 border-bottom">
+        {% if keyword %}
+        <h3>「{{ keyword }}」の検索結果</h3>
+        {% endif %}
+    </div>
+    <div id="book_list">
+        {% for book in book_data %}
+            <div class="bookTag">
+                    <img src="{{ book.image }}" alt="" class="book-img me-3">
+                    <div class="px-2 py-3">
+                        <h5><a href="{{ book.itemUrl }}" class="book-title">{{book.title}}</a></h5>
+                        <p class="text-primary">{{book.author}}</p>
+                        <h3 class="text-warning">{{book.itemPrice}}円<sub class="text-secondary">(税込み)</sub></h3>
+                    </div>
+                    <div class="d-flex flex-column ms-auto">
+                      {% if From == "Select" %}
+                      <a href="{% url 'SelectItem' book.ISBNcode %}" class="btn btn-success" role="button" aria-pressed="true">選択</a>
+                      {% elif From == "Search" %}
+                      <a href="{% url 'TweetOfItem' book.ISBNcode %}" class="btn btn-success" role="button" aria-pressed="true">みんなの投稿を見る</a>
+                      {% endif %}
+                      <div class="d-flex mt-auto">
+                        {% if book.ISBNcode in finished_book_isbncodes %}
+                          <button v-on:click="register_finished_book" name="finish_book_{{ book.ISBNcode }}" class="finish_book active btn me-1" data-ISBNcode="{{ book.ISBNcode }}" data-csrf-token="{{csrf_token}}"><i class="fas fa-check"></i> 読んだ</button>
+                        {% else %}
+                          <button v-on:click="register_finished_book" name="finish_book_{{ book.ISBNcode }}" class="finish_book btn me-1" data-ISBNcode="{{ book.ISBNcode }}" data-csrf-token="{{csrf_token}}"><i class="fas fa-check"></i> 読んだ</button>
+                        {% endif %}
+
+                        {% if book.ISBNcode in reserved_book_isbncodes %}
+                          <button v-on:click="register_reserved_book" name="reserve_book_{{ book.ISBNcode }}" class="reserve_book active btn ms-auto" data-ISBNcode="{{ book.ISBNcode }}" data-csrf-token="{{csrf_token}}"><i class="far fa-heart"></i> 読みたい</button>
+                        {% else %}
+                          <button v-on:click="register_reserved_book" name="reserve_book_{{ book.ISBNcode }}" class="reserve_book btn ms-auto" data-ISBNcode="{{ book.ISBNcode }}" data-csrf-token="{{csrf_token}}"><i class="far fa-heart"></i> 読みたい</button>
+                        {% endif %}
+                      </div>
+                    </div>
+            </div>
+        {% empty %}
+                <p>該当するものはありません</p>
+        {% endfor %}
+    </div>
+    <nav aria-label="Page navigation example" id="paging">
+        <ul class="pagination">
+          {% if page_number != 1 %}
+          <li class="page-item">
+            <button v-on:click="back_page_post" class="page-link" id="page-link-left" aria-label="Previous">
+              <span aria-hidden="true">&laquo;</span>
+            </button>
+          </li>
+          {% endif %}
+
+          {% for num in for_range %}
+            {% if page_number == num %}
+                <li class="page-item active"><button v-on:click="paging_post" class="page-link page-link-num">{{ num }}</button></li>
+            {% else %}
+                <li class="page-item"><button v-on:click="paging_post" class="page-link page-link-num">{{ num }}</button></li>
+            {% endif %}
+          {% endfor %}
+
+          {% if page_number != 10 %}
+          <li class="page-item">
+            <button v-on:click="next_page_post" class="page-link" id="page-link-right" aria-label="Next">
+              <span aria-hidden="true">&raquo;</span>
+            </button>
+          </li>
+          {% endif %}
+        </ul>
+      </nav>
+</div>
+{% endblock content %}
+
+{% block footer %}
+<script src="{% static 'book_register.js' %}"></script>
+
+<script type="text/javascript">
+
+const PagingApp=Vue.createApp({
+    data:()=>({
+        page_number_ele:''
+    }),
+    mounted:function(){
+        this.page_number_ele=document.getElementById("id_page_number")
+    },
+    methods:{
+        paging_post:function(event){
+            this.page_number_ele.value=event.target.innerHTML
+            let form = document.getElementById("Search_form")
+            form.submit()
+        },
+        back_page_post:function(event){
+          this.page_number_ele.value=Number(this.page_number_ele.value)-1
+          let form = document.getElementById("Search_form")
+          form.submit()
+        },
+        next_page_post:function(event){
+          this.page_number_ele.value=Number(this.page_number_ele.value)+1
+          let form = document.getElementById("Search_form")
+          form.submit()
+        }
+    }
+})
+PagingApp.config.compilerOptions.delimiters = ['[[', ']]']
+PagingApp.mount('#paging')
+
+//book_register.jsを参照
+BookRegistrationApp.mount('#book_list')
+
+</script>
+{% endblock footer %}

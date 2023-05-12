@@ -1,0 +1,62 @@
+.form-control {
+    background-color: #212529;
+    color: white;
+    border-color: gray;
+    border: none;
+  }
+
+.form-control:focus{
+    box-shadow: none !important;
+    outline: none;
+    background-color: #212529;
+    color:white;
+}
+.form-select{
+    width: 20%;
+}
+input:-webkit-autofill, input:-webkit-autofill:hover,input:-webkit-autofill:focus{
+    -webkit-box-shadow: 0 0 0 1000px #212529 inset !important;
+    -webkit-text-fill-color: white;
+    transition:0s;
+}
+.bookTag{
+    display: flex;
+    margin: 30px 0;
+    padding: 20px 0;
+    border-bottom: solid 1px;
+}
+.book-title{
+    text-decoration: none;
+}
+.book-img{
+    width: 130px;
+    height: auto;
+}
+sub{
+    font-size: 0.8rem;
+    margin-left: 5px;
+}
+.reserve_book{
+    background: transparent;
+    color: rgba(255, 255, 255, 0.911)!important;
+    border: 2px solid;
+}
+.finish_book{
+    background: transparent;
+    color: rgba(255, 255, 255, 0.911)!important;
+    border: 2px solid;
+}
+.reserve_book:hover{
+    opacity: 0.6;
+}
+.finish_book:hover{
+    opacity: 0.6;
+}
+.reserve_book.active{
+    border: none;
+    background-color: #28a745;
+}
+.finish_book.active{
+    border: none;
+    background-color: #28a745;
+}

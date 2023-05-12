@@ -1,0 +1,266 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block head %}
+<link href="{% static 'Comment.css' %}" rel="stylesheet"> 
+<link href="{% static 'up_button.css' %}" rel="stylesheet"> 
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+{% endblock head %}
+
+{% block title %}
+コメントページ
+{% endblock title %}
+
+
+{% block content %}
+<main id="tweet_list">
+  <!-- 本文 -->
+    <div id="tweet_container" class="tweet-container container myborder border-secondary">
+        <p class="font-bold d-flex">
+          <img src="{{ tweet.user.ProfileImage.url }}" class="user-icon me-3">
+          {{ tweet.user.username }} 
+          {% if user == tweet.user %}
+          <button type="button" v-on:click="DeleteButton" class="btn btn-danger del_confirm" data-bs-toggle="modal" data-bs-target="#DeleteModal"  data-deleteurl="{% url 'TweetDelete' tweet.id %}">削除</button>
+          {% endif %}
+        </p>
+        <p class="tweet-text">{{ tweet.content | linebreaksbr }}</p>
+        <div class="d-flex book-container border border-secondary">
+          <img src="{{ tweet.book.imageUrl }}" alt="" class="book-img me-3">
+          <div class="me-auto">
+           <h6><a href="{{ tweet.book.itemUrl }}" class="book-title">{{ tweet.book.title}}</a></h6>
+           <p class="text-primary">{{ tweet.book.author }}</p>
+          </div>
+          <div class="d-flex mt-auto">
+            {% if tweet.book.ISBNcode in finished_book_isbncodes %}
+              <button v-on:click="register_finished_book" name="finish_book_{{ tweet.book.ISBNcode }}" class="finish_book active btn me-1" data-ISBNcode="{{ tweet.book.ISBNcode }}" data-csrf-token="{{csrf_token}}"><i class="fas fa-check"></i> 読んだ</button>
+            {% else %}
+              <button v-on:click="register_finished_book" name="finish_book_{{ tweet.book.ISBNcode }}" class="finish_book btn me-1" data-ISBNcode="{{ tweet.book.ISBNcode }}" data-csrf-token="{{csrf_token}}"><i class="fas fa-check"></i> 読んだ</button>
+            {% endif %}
+  
+            {% if tweet.book.ISBNcode in reserved_book_isbncodes %}
+              <button v-on:click="register_reserved_book" name="reserve_book_{{ tweet.book.ISBNcode }}" class="reserve_book active btn ms-auto" data-ISBNcode="{{ tweet.book.ISBNcode }}" data-csrf-token="{{csrf_token}}"><i class="far fa-heart"></i> 読みたい</button>
+            {% else %}
+              <button v-on:click="register_reserved_book" name="reserve_book_{{ tweet.book.ISBNcode }}" class="reserve_book btn ms-auto" data-ISBNcode="{{ tweet.book.ISBNcode }}" data-csrf-token="{{csrf_token}}"><i class="far fa-heart"></i> 読みたい</button>
+            {% endif %}
+          </div>
+       </div>
+      <div class="d-flex">
+        <div class="d-flex">
+            {% if liked %}
+                <button class="like" v-on:click="tweet_like_post" id="tweet_{{tweet.id}}" data-like-id="{{tweet.id}}"><i class="fas fa-lg fa-heart like-after"></i></button>
+            {% else %}
+                <button class="like" v-on:click="tweet_like_post" id="tweet_{{tweet.id}}" data-like-id="{{tweet.id}}"><i class="far fa-lg fa-heart like-before"></i></button>      
+            {% endif %}
+            <p id="tweet_count_{{tweet.id}}" class="count"> {{ tweet.like_set.count }} </p>
+        </div>
+        {% with ''|center:5 as range %}
+         <div class="stars ms-auto">
+          {% for _ in range %}
+           {% if forloop.counter <= tweet.rating %}
+            <span class="star-yellow">★</span>
+           {% else %}
+            <span class="star-gray">★</span>
+           {% endif %}
+          {% endfor %}
+         </div>
+        {% endwith %}
+      </div>
+    </div>
+<!--------------------------------->
+<!-- 本文に対するコメント -->
+    {% for comment in comment_list %}
+    <div class="tweet-container container myborder border-secondary">
+        <p class="font-bold d-flex">
+          <img src="{{ comment.user.ProfileImage.url }}" class="user-icon me-3">
+          {{ comment.user.username }} 
+          {% if user == comment.user %}
+          <button type="button" v-on:click="DeleteButton" class="btn btn-danger del_confirm" data-bs-toggle="modal" data-bs-target="#DeleteModal"  data-deleteurl="{% url 'CommentDelete' comment.id %}">削除</button>
+          {% endif %}
+        </p>
+       <p class="tweet-text">{{ comment.text | linebreaksbr }}</p>
+
+      <div class="d-flex">
+        <div class="d-flex">
+            {% if comment.id in liked_list %}
+                <button class="like" v-on:click="comment_like_post" id="comment_{{comment.id}}" data-like-id="{{comment.id}}"><i class="fas fa-lg fa-heart like-after"></i></button>
+            {% else %}
+                <button class="like" v-on:click="comment_like_post" id="comment_{{comment.id}}" data-like-id="{{comment.id}}"><i class="far fa-lg fa-heart like-before"></i></button>      
+            {% endif %}
+            <p id="comment_count_{{comment.id}}" class="count"> {{ comment.like_set.count }} </p>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+    <!-------------------------------->
+
+    <button id="UpButton"><i class="fas fa-angle-double-up"></i></button>
+
+    <!-- DeleteModal -->
+    <div class="modal fade" id="DeleteModal" tabindex="-1" aria-labelledby="DeleteModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="DeleteModalLabel">確認</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            本当に削除してよろしいですか?
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+            <a v-bind:href="[[ delete_url ]]" class="btn btn-danger" id="del_url">OK</a>
+          </div>
+        </div>
+      </div>
+    </div>
+</main>
+
+<!-- 下部のbar -->
+<footer class="footer mt-auto py-3 fixed-bottom">
+ <div class="container" id="comment_form">
+    <form method="POST" class="d-flex" v-bind:style="{ lineheight:lineheight+'px', height:height+'px' }" v-on:input="form_resize">{% csrf_token %}
+      {{form.text}}
+        <div class="d-flex">
+         <button class="btn btn-success ms-auto" type="submit" id="submit-button">送信</button>
+        </div>
+    </form>
+ </div>
+</footer>
+
+{% endblock content %}
+
+{% block footer %}
+<script src="{% static 'up_button.js' %}"></script>
+<script src="{% static 'Comment.js' %}"></script>
+
+<!--いいね機能のAjax処理-->
+<script type="text/javascript">
+const TweetListApp=Vue.createApp({
+    data:()=>({
+        delete_url:'#',
+        tweet_like_url:"{% url 'tweet_like' %}",
+        comment_like_url:"{% url 'comment_like' %}",
+        reserve_book_url:"/register-reserved-book/",
+        finish_book_url:"/register-finished-book/",
+    }),
+    methods:{
+        DeleteButton:function(event){
+            this.delete_url=event.target.dataset.deleteurl
+        },
+        tweet_like_post:function(event){
+          const headers={
+              'X-Requested-With': 'XMLHttpRequest',
+              'Content-Type':'application / json',
+              'X-CSRFToken':'{{ csrf_token }}'
+          }
+          let like_data={
+            "like_id":event.currentTarget.dataset.likeId,
+          }
+          like_data=JSON.stringify(like_data)
+          axios.post(this.tweet_like_url,like_data,{headers:headers})
+          .then(function(res){
+            const target_button=document.getElementById('tweet_'+res.data.like_id);
+            if(res.data.liked){
+              target_button.innerHTML="<i class='fas fa-lg fa-heart like-after'></i>"
+            }else{
+              target_button.innerHTML="<i class='far fa-lg fa-heart like-before'></i>"
+            }
+            target_counter = document.getElementById("tweet_count_"+res.data.like_id);
+            target_counter.innerText=res.data.count
+          })
+          .catch(function(error){
+            console.log(error)
+          })
+        },
+        comment_like_post:function(event){
+          const headers={
+              'X-Requested-With': 'XMLHttpRequest',
+              'Content-Type':'application / json',
+              'X-CSRFToken':'{{ csrf_token }}'
+          }
+          let like_data={
+            "like_id":event.currentTarget.dataset.likeId,
+          }
+          like_data=JSON.stringify(like_data)
+          axios.post(this.comment_like_url,like_data,{headers:headers})
+          .then(function(res){
+            const target_button=document.getElementById('comment_'+res.data.like_id);
+            if(res.data.liked){
+              target_button.innerHTML="<i class='fas fa-lg fa-heart like-after'></i>"
+            }else{
+              target_button.innerHTML="<i class='far fa-lg fa-heart like-before'></i>"
+            }
+            target_counter = document.getElementById("comment_count_"+res.data.like_id);
+            target_counter.innerText=res.data.count
+          })
+          .catch(function(error){
+            console.log(error)
+          })
+        },
+        register_reserved_book:function(event){
+          const headers={
+              'X-Requested-With': 'XMLHttpRequest',
+              'Content-Type':'application / json',
+              'X-CSRFToken':event.currentTarget.dataset.csrfToken,
+          }
+          let data={
+            "ISBNcode":event.currentTarget.dataset.isbncode,
+          }
+          data=JSON.stringify(data)
+          axios.post(this.reserve_book_url,data,{headers:headers})
+          .then(function(res){
+            const target_buttons=document.getElementsByName('reserve_book_'+res.data.ISBNcode);
+            if(res.data.reserved){
+              for(let button of target_buttons){
+                button.classList.add('active')
+              }
+            }else{
+              for(let button of target_buttons){
+                button.classList.remove('active')
+              }
+            }
+          })
+          .catch(function(error){
+            console.log(error)
+          })
+        },
+        register_finished_book:function(event){
+          const headers={
+              'X-Requested-With': 'XMLHttpRequest',
+              'Content-Type':'application / json',
+              'X-CSRFToken':event.currentTarget.dataset.csrfToken,
+          }
+          let data={
+            "ISBNcode":event.currentTarget.dataset.isbncode,
+          }
+          data=JSON.stringify(data)
+          axios.post(this.finish_book_url,data,{headers:headers})
+          .then(function(res){
+            const target_buttons=document.getElementsByName('finish_book_'+res.data.ISBNcode);
+            if(res.data.finished){
+              for(let button of target_buttons){
+                button.classList.add('active')
+              }
+            }else{
+              for(let button of target_buttons){
+                button.classList.remove('active')
+              }
+            }
+          })
+          .catch(function(error){
+            console.log(error)
+          })
+        }
+    }
+})
+TweetListApp.config.compilerOptions.delimiters = ['[[', ']]']
+TweetListApp.mount('#tweet_list') 
+
+</script>
+
+
+
+{% endblock footer %}
+
+
+

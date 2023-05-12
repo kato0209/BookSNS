@@ -1,0 +1,354 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block head %}
+<link href="{% static 'user_page.css' %}" rel="stylesheet"> 
+<link href="{% static 'up_button.css' %}" rel="stylesheet"> 
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+{% endblock head %}
+{% block title %}
+マイページ
+{% endblock title %}
+
+
+{% block header %}
+<!-- navbar(検索フォーム付き) -->
+<nav class="navbar bg-dark sticky-top mb-3">
+  <div class="container-fluid">
+    <a class="navbar-brand navbarTextColor"><i class="far fa-smile-beam smileIcon"></i>BOOK_SNS</a>
+
+    <ul class="nav nav-pills">
+      <li class="nav-item"><a href="{% url 'home' %}" class="nav-link">ホーム</a></li>
+      <li class="nav-item"><a href="{% url 'SearchItem' 'Search' %}" class="nav-link"><i class="fas fa-search"></i>本を探す</a></li>
+      <li class="nav-item"><a href="{% url 'Chat' user.id %}" class="nav-link">チャット</a></li>
+      <li class="nav-item"><a href="{% url 'UserPageAtHome' user.id %}" class="nav-link">マイページ</a></li>
+    </ul>
+
+    <form method="GET" class="d-flex ms-auto Search-user" action="{% url 'search_user' %}">
+      <input class="form-control" type="text" placeholder="ユーザーを検索" aria-label="Search" name="keyword_user">
+      <button class="btn btn-success" type="submit"><i class="fas fa-search"></i><span>検索</span></button>
+    </form>
+  </div>
+
+  {% if user == selected_user %}
+  <div class="container">
+    <ul class="nav nav-pills mx-auto page-select">
+      {% if selected_page == '/user-page-at-home/' %}
+      <li class="nav-item selected-page"><a href="{% url 'UserPageAtHome' selected_user.id %}" class="nav-link">自分の投稿</a></li>
+      <li class="nav-item"><a href="{% url 'UserPageAtReservedBook' selected_user.id %}" class="nav-link">読みたい本</a></li>
+      <li class="nav-item"><a href="{% url 'UserPageAtFinishedBook' selected_user.id %}" class="nav-link">読み終わった本</a></li>
+      {% elif selected_page == '/user-page-at-reserved-book/' %}
+      <li class="nav-item"><a href="{% url 'UserPageAtHome' selected_user.id %}" class="nav-link">自分の投稿</a></li>
+      <li class="nav-item selected-page"><a href="{% url 'UserPageAtReservedBook' selected_user.id %}" class="nav-link">読みたい本</a></li>
+      <li class="nav-item"><a href="{% url 'UserPageAtFinishedBook' selected_user.id %}" class="nav-link">読み終わった本</a></li>
+      {% else %}
+      <li class="nav-item"><a href="{% url 'UserPageAtHome' selected_user.id %}" class="nav-link">自分の投稿</a></li>
+      <li class="nav-item"><a href="{% url 'UserPageAtReservedBook' selected_user.id %}" class="nav-link">読みたい本</a></li>
+      <li class="nav-item selected-page"><a href="{% url 'UserPageAtFinishedBook' selected_user.id %}" class="nav-link">読み終わった本</a></li>
+      {% endif %}
+    </ul>
+  </div>
+  {% endif %}
+
+</nav>
+{% endblock header %}
+
+
+{% block content %}
+<div id="user_profile" class="container mt-5">
+  <!-- ユーザープロフィール -->
+  <div class="font-bold profile-container d-flex align-items-center">
+      <img src="{{ selected_user.ProfileImage.url }}" class="user-icon me-3">
+      <div class="me-5">{{selected_user.username}}</div>
+      <div class="w-100"></div>
+      <div class="fs-5 follow-text">
+        <a id="following_count" href="{% url 'following' selected_user.id %}" class="me-3">{{ selected_user_following_count }} フォロー</a>
+        <a id="follower_count" href="{% url 'follower' selected_user.id %}">{{ selected_user_followed_count }} フォロワー</a>
+      </div>
+      {% if user == selected_user %}
+      <a href="{% url 'profile_edit' user.id %}" class="btn btn-success logout-button ms-auto" role="button" aria-pressed="true">プロフィールを変更</a>
+      {% else %}
+      <div class="ms-auto d-flex">
+        <a href="{% url 'room' selected_user.id %}" class="MessageButton me-3" role="button" aria-pressed="true">
+          <i class="far fa-envelope"></i>
+        </a>
+      <div>
+        {% if followed %}
+            <button id="follow_{{selected_user.id}}" v-on:click="follow_post" name="{{selected_user.id}}" class="follow btn btn-light clear-decoration">フォロー解除</button>
+        {% else %}
+            <button id="follow_{{selected_user.id}}" v-on:click="follow_post" name="{{selected_user.id}}" class="follow btn btn-success clear-decoration">フォロー</button>      
+        {% endif %}
+      </div>
+      </div>
+      {% endif %}
+  </div>
+  <!--------------------->
+</div>
+
+<main id="main">
+  <!-- 投稿の一覧 -->
+  {% if tweet_list %}
+    <div id="tweet_list">
+    {% for tweet in tweet_list reversed %}
+      <div class="tweet-container container border border-secondary">
+          <p class="font-bold d-flex">
+          <img src="{{ tweet.user.ProfileImage.url }}" class="user-icon me-3">
+          {{ tweet.user.username }} 
+          {% if user == selected_user %}
+          <button type="button" id="delete-button" v-on:click="DeleteButton" class="btn btn-danger del_confirm" data-bs-toggle="modal" data-bs-target="#DeleteModal" data-deleteurl="{% url 'TweetDelete' tweet.id %}">削除</button>
+          {% endif %}
+          </p>
+          <p class="tweet-text">{{ tweet.content | linebreaksbr }}</p>
+          <div class="d-flex book-container border border-secondary">
+            <img src="{{ tweet.book.imageUrl }}" alt="" class="book-img me-3">
+            <div class="me-auto">
+              <h6><a href="{{ tweet.book.itemUrl }}" class="book-title">{{ tweet.book.title}}</a></h6>
+              <p class="text-primary">{{ tweet.book.author }}</p>
+            </div>
+            <div class="d-flex mt-auto">
+              {% if tweet.book.ISBNcode in finished_book_isbncodes %}
+                <button v-on:click="register_finished_book" name="finish_book_{{ tweet.book.ISBNcode }}" class="finish_book active btn me-1" data-ISBNcode="{{ tweet.book.ISBNcode }}" data-csrf-token="{{csrf_token}}"><i class="fas fa-check"></i> 読んだ</button>
+              {% else %}
+                <button v-on:click="register_finished_book" name="finish_book_{{ tweet.book.ISBNcode }}" class="finish_book btn me-1" data-ISBNcode="{{ tweet.book.ISBNcode }}" data-csrf-token="{{csrf_token}}"><i class="fas fa-check"></i> 読んだ</button>
+              {% endif %}
+    
+              {% if tweet.book.ISBNcode in reserved_book_isbncodes %}
+                <button v-on:click="register_reserved_book" name="reserve_book_{{ tweet.book.ISBNcode }}" class="reserve_book active btn ms-auto" data-ISBNcode="{{ tweet.book.ISBNcode }}" data-csrf-token="{{csrf_token}}"><i class="far fa-heart"></i> 読みたい</button>
+              {% else %}
+                <button v-on:click="register_reserved_book" name="reserve_book_{{ tweet.book.ISBNcode }}" class="reserve_book btn ms-auto" data-ISBNcode="{{ tweet.book.ISBNcode }}" data-csrf-token="{{csrf_token}}"><i class="far fa-heart"></i> 読みたい</button>
+              {% endif %}
+            </div>
+          </div>
+        <div class="d-flex">
+          <div class="d-flex">
+            {% if tweet.id in liked_list %}
+                <button class="like" id="tweet-{{tweet.id}}" v-on:click="tweet_like_post" data-like-id="{{tweet.id}}"><i class="fas fa-lg fa-heart like-after"></i></button>
+            {% else %}
+                <button class="like" id="tweet-{{tweet.id}}" v-on:click="tweet_like_post" data-like-id="{{tweet.id}}"><i class="far fa-lg fa-heart like-before"></i></button>      
+            {% endif %}
+                <p id="tweet-count-{{tweet.id}}" class="count"> {{ tweet.like_set.count }} </p>
+          </div>
+          {% with ''|center:5 as range %}
+          <div class="stars ms-auto">
+            {% for _ in range %}
+            {% if forloop.counter <= tweet.rating %}
+              <span class="star-yellow">★</span>
+            {% else %}
+              <span class="star-gray">★</span>
+            {% endif %}
+            {% endfor %}
+          </div>
+          {% endwith %}
+        </div>
+        <hr>
+        <div class="comment">
+          <a href="{% url 'CreateComment' tweet.id %}" class="me-3" role="button" aria-pressed="true">
+          コメント>
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  {% elif reserved_book_list %}
+    <div id="reserved_book_list" class="container">
+      <div class="row">
+        {% for book in reserved_book_list %}
+          <div class="col-4 mb-5 d-flex flex-column">
+            <img src="{{ book.imageUrl }}" class="w-50 ms-auto me-auto">
+            <a href="{{ book.itemUrl }}" class="book-title mt-1 w-50 ms-auto me-auto">{{ book.title}}</a>
+            <div class="d-flex w-50 ms-auto me-auto mt-3">
+              {% if book.ISBNcode in finished_book_isbncodes %}
+                <button v-on:click="register_finished_book" name="finish_book_{{ book.ISBNcode }}" class="finish_book active btn me-1" data-ISBNcode="{{ book.ISBNcode }}" data-csrf-token="{{csrf_token}}"><i class="fas fa-check"></i> 読んだ</button>
+              {% else %}
+                <button v-on:click="register_finished_book" name="finish_book_{{ book.ISBNcode }}" class="finish_book btn me-1" data-ISBNcode="{{ book.ISBNcode }}" data-csrf-token="{{csrf_token}}"><i class="fas fa-check"></i> 読んだ</button>
+              {% endif %}
+
+              {% if book.ISBNcode in reserved_book_isbncodes %}
+                <button v-on:click="register_reserved_book" name="reserve_book_{{ book.ISBNcode }}" class="reserve_book active btn ms-auto" data-ISBNcode="{{ book.ISBNcode }}" data-csrf-token="{{csrf_token}}"><i class="far fa-heart"></i> 読みたい</button>
+              {% else %}
+                <button v-on:click="register_reserved_book" name="reserve_book_{{ book.ISBNcode }}" class="reserve_book btn ms-auto" data-ISBNcode="{{ book.ISBNcode }}" data-csrf-token="{{csrf_token}}"><i class="far fa-heart"></i> 読みたい</button>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% else %}
+    <div id="finished_book_list" class="container">
+      <div class="row">
+        {% for book in finished_book_list %}
+          <div class="col-4 mb-5 d-flex flex-column">
+            <img src="{{ book.imageUrl }}" class="w-50 ms-auto me-auto">
+            <a href="{{ book.itemUrl }}" class="book-title mt-1 w-50 ms-auto me-auto">{{ book.title}}</a>
+            <div class="d-flex w-50 ms-auto me-auto mt-3"><a href="{% url 'SelectItem' book.ISBNcode %}" class="btn btn-success ms-auto" role="button">感想を投稿</a></div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+  <!-- DeleteModal -->
+  <div class="modal fade" id="DeleteModal" tabindex="-1" aria-labelledby="DeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="DeleteModalLabel">確認</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          本当に削除してよろしいですか?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+          <a v-bind:href="[[ delete_url ]]" class="btn btn-danger" id="del_url">OK</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!--------->
+</main>
+
+<button id="UpButton"><i class="fas fa-angle-double-up"></i></button>
+{% endblock content %}
+
+{% block footer %}
+<script src="{% static 'up_button.js' %}"></script>
+
+<script type="text/javascript">
+
+const TweetListApp=Vue.createApp({
+    data:()=>({
+        delete_url:'#',
+        like_url:"{% url 'tweet_like' %}",
+        reserve_book_url:"/register-reserved-book/",
+        finish_book_url:"/register-finished-book/",
+    }),
+    methods:{
+        DeleteButton:function(event){
+            this.delete_url=event.target.dataset.deleteurl
+        },
+        tweet_like_post:function(event){
+          const headers={
+              'X-Requested-With': 'XMLHttpRequest',
+              'Content-Type':'application / json',
+              'X-CSRFToken':'{{ csrf_token }}'
+          }
+          let like_data={
+            "like_id":event.currentTarget.dataset.likeId,
+          }
+          like_data=JSON.stringify(like_data)
+          axios.post(this.like_url,like_data,{headers:headers})
+          .then(function(res){
+            const target_button=document.getElementById('tweet-'+res.data.like_id);
+            if(res.data.liked){
+              target_button.innerHTML="<i class='fas fa-lg fa-heart like-after'></i>"
+            }else{
+              target_button.innerHTML="<i class='far fa-lg fa-heart like-before'></i>"
+            }
+            target_counter = document.getElementById("tweet-count-"+res.data.like_id);
+            target_counter.innerText=res.data.count
+          })
+          .catch(function(error){
+            console.log(error)
+          })
+        },
+        register_reserved_book:function(event){
+          const headers={
+              'X-Requested-With': 'XMLHttpRequest',
+              'Content-Type':'application / json',
+              'X-CSRFToken':event.currentTarget.dataset.csrfToken,
+          }
+          let data={
+            "ISBNcode":event.currentTarget.dataset.isbncode,
+          }
+          data=JSON.stringify(data)
+          axios.post(this.reserve_book_url,data,{headers:headers})
+          .then(function(res){
+            const target_buttons=document.getElementsByName('reserve_book_'+res.data.ISBNcode);
+            if(res.data.reserved){
+              for(let button of target_buttons){
+                button.classList.add('active')
+              }
+            }else{
+              for(let button of target_buttons){
+                button.classList.remove('active')
+              }
+            }
+          })
+          .catch(function(error){
+            console.log(error)
+          })
+        },
+        register_finished_book:function(event){
+          const headers={
+              'X-Requested-With': 'XMLHttpRequest',
+              'Content-Type':'application / json',
+              'X-CSRFToken':event.currentTarget.dataset.csrfToken,
+          }
+          let data={
+            "ISBNcode":event.currentTarget.dataset.isbncode,
+          }
+          data=JSON.stringify(data)
+          axios.post(this.finish_book_url,data,{headers:headers})
+          .then(function(res){
+            const target_buttons=document.getElementsByName('finish_book_'+res.data.ISBNcode);
+            if(res.data.finished){
+              for(let button of target_buttons){
+                button.classList.add('active')
+              }
+            }else{
+              for(let button of target_buttons){
+                button.classList.remove('active')
+              }
+            }
+          })
+          .catch(function(error){
+            console.log(error)
+          })
+        }
+    }
+})
+TweetListApp.config.compilerOptions.delimiters = ['[[', ']]']
+TweetListApp.mount('#main')
+
+const UserProfileApp=Vue.createApp({
+    data:()=>({
+        follow_url:"{% url 'follow' %}",
+    }),
+    methods:{
+        follow_post:function(event){
+          const headers={
+              'X-Requested-With': 'XMLHttpRequest',
+              'Content-Type':'application / json',
+              'X-CSRFToken':'{{ csrf_token }}'
+          }
+          let follow_data={
+            "follow_id":event.currentTarget.name,
+            "from_user_page": true,
+          }
+          follow_data=JSON.stringify(follow_data)
+          axios.post(this.follow_url,follow_data,{headers:headers})
+          .then(function(res){
+            const target_button=document.getElementById('follow_'+res.data.follow_id);
+            if(res.data.followed){
+              target_button.classList.remove("btn-success")
+              target_button.classList.add("btn-light")
+              target_button.innerText="フォロー解除"
+            }else{
+              target_button.classList.remove("btn-light")
+              target_button.classList.add("btn-success")
+              target_button.innerText="フォロー"
+            }
+            target_button.blur()
+            follower_count_ele=document.getElementById('follower_count')
+            follower_count_ele.innerText=res.data.follower_count+' フォロワー'
+          })
+          .catch(function(error){
+            console.log(error)
+          })
+        }
+    }
+})
+UserProfileApp.config.compilerOptions.delimiters = ['[[', ']]']
+UserProfileApp.mount('#user_profile')
+</script>
+{% endblock footer%}

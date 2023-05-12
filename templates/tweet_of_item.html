@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block head %}
+<link href="{% static 'tweet_of_item.css' %}" rel="stylesheet"> 
+<link href="{% static 'up_button.css' %}" rel="stylesheet"> 
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+{% endblock head %}
+
+{% block title %}
+{% endblock title %}
+
+{% block content %}
+{% if not tweetmodel_list %}
+<h1 class="mt-5 ms-3">まだ投稿がありません</h1>
+{% else %}
+<div id="tweet_list">
+  {% for tweet in tweetmodel_list %}
+  <div class="tweet-container container border border-secondary">
+      <p class="font-bold d-flex">
+        <a href="{% url 'UserPageAtHome' tweet.user.id %}" class="me-3" role="button" aria-pressed="true">
+        <img src="{{ tweet.user.ProfileImage.url }}" class="user-icon">
+        </a>
+        {{ tweet.user.username }} 
+        {% if user == tweet.user %}
+        <button type="button" class="btn btn-danger del_confirm" v-on:click="DeleteButton" data-bs-toggle="modal" data-bs-target="#DeleteModal"  data-deleteurl="{% url 'TweetDelete' tweet.id %}">削除</button>
+        {% endif %}
+      </p>
+     <p class="tweet-text">{{ tweet.content | linebreaksbr }}</p>
+     <div class="d-flex book-container border border-secondary">
+        <img src="{{ tweet.book.imageUrl }}" alt="" class="book-img me-3">
+        <div class="me-auto">
+         <h6><a href="{{ tweet.book.itemUrl }}" class="book-title">{{ tweet.book.title}}</a></h6>
+         <p class="text-primary">{{ tweet.book.author }}</p>
+        </div>
+        <div class="d-flex mt-auto">
+          {% if tweet.book.ISBNcode in finished_book_isbncodes %}
+            <button v-on:click="register_finished_book" name="finish_book_{{ tweet.book.ISBNcode }}" class="finish_book active btn me-1" data-ISBNcode="{{ tweet.book.ISBNcode }}" data-csrf-token="{{csrf_token}}"><i class="fas fa-check"></i> 読んだ</button>
+          {% else %}
+            <button v-on:click="register_finished_book" name="finish_book_{{ tweet.book.ISBNcode }}" class="finish_book btn me-1" data-ISBNcode="{{ tweet.book.ISBNcode }}" data-csrf-token="{{csrf_token}}"><i class="fas fa-check"></i> 読んだ</button>
+          {% endif %}
+
+          {% if tweet.book.ISBNcode in reserved_book_isbncodes %}
+            <button v-on:click="register_reserved_book" name="reserve_book_{{ tweet.book.ISBNcode }}" class="reserve_book active btn ms-auto" data-ISBNcode="{{ tweet.book.ISBNcode }}" data-csrf-token="{{csrf_token}}"><i class="far fa-heart"></i> 読みたい</button>
+          {% else %}
+            <button v-on:click="register_reserved_book" name="reserve_book_{{ tweet.book.ISBNcode }}" class="reserve_book btn ms-auto" data-ISBNcode="{{ tweet.book.ISBNcode }}" data-csrf-token="{{csrf_token}}"><i class="far fa-heart"></i> 読みたい</button>
+          {% endif %}
+        </div>
+     </div>
+    <div class="d-flex"> 
+      <div class="d-flex">
+        {% if tweet.id in liked_list %}
+            <button class="like" v-on:click="tweet_like_post" id="tweet_{{tweet.id}}" data-like-id="{{tweet.id}}"><i class="fas fa-lg fa-heart like-after"></i></button>
+        {% else %}
+            <button class="like" v-on:click="tweet_like_post" id="tweet_{{tweet.id}}" data-like-id="{{tweet.id}}"><i class="far fa-lg fa-heart like-before"></i></button>      
+        {% endif %}
+        <p id="tweet_count_{{tweet.id}}" class="count"> {{ tweet.like_set.count }} </p>
+      </div>
+      {% with ''|center:5 as range %}
+        <div class="stars ms-auto">
+        {% for _ in range %}
+          {% if forloop.counter <= tweet.rating %}
+          <span class="star-yellow">★</span>
+          {% else %}
+          <span class="star-gray">★</span>
+          {% endif %}
+        {% endfor %}
+        </div>
+      {% endwith %}
+    </div>
+    <hr>
+     <div class="comment">
+      <a href="{% url 'CreateComment' tweet.id %}" class="me-3" role="button" aria-pressed="true">
+       コメント>
+      </a>
+     </div>
+  </div>
+  {% endfor %}
+  <!-- DeleteModal -->
+  <div class="modal fade" id="DeleteModal" tabindex="-1" aria-labelledby="DeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="DeleteModalLabel">確認</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          本当に削除してよろしいですか?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+          <a v-bind:href="[[ delete_url ]]" class="btn btn-danger" id="del_url">OK</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<button id="UpButton"><i class="fas fa-angle-double-up"></i></button>
+{% endif %}
+{% endblock content %}
+
+{% block footer %}
+<script src="{% static 'up_button.js' %}"></script>
+
+<!--いいね機能のAjax処理-->
+<script type="text/javascript">
+const TweetListApp=Vue.createApp({
+    data:()=>({
+        delete_url:'#',
+        like_url:"{% url 'tweet_like' %}",
+        reserve_book_url:"/register-reserved-book/",
+        finish_book_url:"/register-finished-book/",
+    }),
+    methods:{
+        DeleteButton:function(event){
+            this.delete_url=event.target.dataset.deleteurl
+        },
+        tweet_like_post:function(event){
+          const headers={
+              'X-Requested-With': 'XMLHttpRequest',
+              'Content-Type':'application / json',
+              'X-CSRFToken':'{{ csrf_token }}'
+          }
+          let like_data={
+            "like_id":event.currentTarget.dataset.likeId,
+          }
+          like_data=JSON.stringify(like_data)
+          axios.post(this.like_url,like_data,{headers:headers})
+          .then(function(res){
+            const target_button=document.getElementById('tweet_'+res.data.like_id);
+            if(res.data.liked){
+              target_button.innerHTML="<i class='fas fa-lg fa-heart like-after'></i>"
+            }else{
+              target_button.innerHTML="<i class='far fa-lg fa-heart like-before'></i>"
+            }
+            target_counter = document.getElementById("tweet_count_"+res.data.like_id);
+            target_counter.innerText=res.data.count
+          })
+          .catch(function(error){
+            console.log(error)
+          })
+        },
+        register_reserved_book:function(event){
+          console.log(888)
+          const headers={
+              'X-Requested-With': 'XMLHttpRequest',
+              'Content-Type':'application / json',
+              'X-CSRFToken':event.currentTarget.dataset.csrfToken,
+          }
+          let data={
+            "ISBNcode":event.currentTarget.dataset.isbncode,
+          }
+          data=JSON.stringify(data)
+          axios.post(this.reserve_book_url,data,{headers:headers})
+          .then(function(res){
+            const target_buttons=document.getElementsByName('reserve_book_'+res.data.ISBNcode);
+            if(res.data.reserved){
+              for(let button of target_buttons){
+                button.classList.add('active')
+              }
+            }else{
+              for(let button of target_buttons){
+                button.classList.remove('active')
+              }
+            }
+          })
+          .catch(function(error){
+            console.log(error)
+          })
+        },
+        register_finished_book:function(event){
+          const headers={
+              'X-Requested-With': 'XMLHttpRequest',
+              'Content-Type':'application / json',
+              'X-CSRFToken':event.currentTarget.dataset.csrfToken,
+          }
+          let data={
+            "ISBNcode":event.currentTarget.dataset.isbncode,
+          }
+          data=JSON.stringify(data)
+          axios.post(this.finish_book_url,data,{headers:headers})
+          .then(function(res){
+            const target_buttons=document.getElementsByName('finish_book_'+res.data.ISBNcode);
+            if(res.data.finished){
+              for(let button of target_buttons){
+                button.classList.add('active')
+              }
+            }else{
+              for(let button of target_buttons){
+                button.classList.remove('active')
+              }
+            }
+          })
+          .catch(function(error){
+            console.log(error)
+          })
+        }
+    }
+})
+TweetListApp.config.compilerOptions.delimiters = ['[[', ']]']
+TweetListApp.mount('#tweet_list') 
+</script>
+{% endblock footer %}
