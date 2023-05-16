@@ -172,10 +172,6 @@ if not DEBUG:
       'API_SECRET':env('CLOUDINARY_API_SECRET'),
     }
 
-#heroku用DB設定
-db_from_env = dj_database_url.config(conn_max_age=600, ssl_require=True)
-DATABASES['default'].update(db_from_env)
-
 #Email送信
 EMAIL_BACKEND = 'sendgrid_backend.SendgridBackend'
 EMAIL_HOST = 'smtp.sendgrid.net'
@@ -194,4 +190,3 @@ CHANNEL_LAYERS = {
         }
     }
 }
-
