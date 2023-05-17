@@ -34,7 +34,8 @@ https://kato-aws-server.com/  <br>
 ●ユーザープロフィール画像変更機能<br>
 ●読みたい本や、読み終わった本の管理機能<br>
 
-●感想投稿の流れ↓
+## 機能一覧画像例
+### 感想投稿の流れ↓
 ・感想を投稿したい本をキーワード or ジャンルで検索
 ![image](https://github.com/kato0209/BookSNS/assets/89386373/72483ea5-2926-44a0-ab7d-07bbe8a936a6)<br>
 ・対象の本を選択
@@ -42,5 +43,5 @@ https://kato-aws-server.com/  <br>
 ・投稿
 ![image](https://github.com/kato0209/BookSNS/assets/89386373/b391682f-064b-4e42-a6f3-058326bc138d)<br>
 
-●チャット機能
+### チャット機能
 ![image](https://github.com/kato0209/BookSNS/assets/89386373/f678cc87-27ef-47e4-a94e-e9e5b1059aa7)
