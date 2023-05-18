@@ -18,7 +18,7 @@ import dj_database_url
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SERVER_NAME='book-sns-0209.com'
+SERVER_NAME='kato-aws-server.com'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
@@ -28,8 +28,6 @@ DEBUG = False
 
 env = environ.Env()
 env.read_env(os.path.join(BASE_DIR,'.env'))
-
-ALLOWED_HOSTS = [str(env('ALLOWED_HOSTS')), 'localhost']
 
 # Application definition
 
@@ -158,6 +156,7 @@ except ImportError:
 
 if not DEBUG:
     SECRET_KEY = env('SECRET_KEY')
+    ALLOWED_HOSTS = [env('ALLOWED_HOSTS_IP'), env('ALLOWED_HOSTS_DOMAIN'), '127.0.0.1']
     REDIS_URL=env('REDIS_URL')
     WS_URL='wss://book-sns-0209.com:8443/'
     APPLICARIONID=env('APPLICATIONID')
