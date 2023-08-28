@@ -2,8 +2,8 @@
 {% load static %}
 
 {% block head %}
-<link href="{% static 'home.css' %}" rel="stylesheet"> 
-<link href="{% static 'up_button.css' %}" rel="stylesheet"> 
+<link href="{% static 'home.css' %}" rel="stylesheet">
+<link href="{% static 'up_button.css' %}" rel="stylesheet">
 {% endblock head %}
 {% block title %}
 ホーム
@@ -13,10 +13,12 @@
 <!-- navbar(検索フォーム付き) -->
 <nav class="navbar bg-dark sticky-top mb-3">
   <div class="container-fluid">
-    <a class="navbar-brand navbarTextColor"><i class="far fa-smile-beam smileIcon"></i>BOOK_SNS</a>
+    <a href="{% url 'home' %}" class="navbar-brand navbarTextColor"><i
+        class="far fa-smile-beam smileIcon"></i>BOOK_SNS</a>
 
     <ul class="nav nav-pills">
-      <li class="nav-item"><a href="{% url 'SearchItem' 'Search' %}" class="nav-link"><i class="fas fa-search"></i>本を探す</a></li>
+      <li class="nav-item"><a href="{% url 'SearchItem' 'Search' %}" class="nav-link"><i
+            class="fas fa-search"></i>本を探す</a></li>
       <li class="nav-item"><a href="{% url 'Chat' user.id %}" class="nav-link">チャット</a></li>
       <li class="nav-item"><a href="{% url 'UserPageAtHome' user.id %}" class="nav-link">マイページ</a></li>
     </ul>
@@ -45,80 +47,89 @@
 {% block content %}
 <!-- ログアウト、検索バー、tweetボタンなど -->
 <div class="mx-3 mb-4">
-    <form method="GET" class="d-flex">
-      <a href="{% url 'logout' %}" class="btn btn-success" role="button" aria-pressed="true">ログアウト</a>
-        <input type="text" class="form-control Search-form ms-auto" placeholder="tweetを検索" name="keyword">
-        <button class="btn btn-outline-success" type="submit"><i class="fas fa-search"></i><span>検索</span></button>
-    </form>
+  <form method="GET" class="d-flex">
+    <a href="{% url 'logout' %}" class="btn btn-success" role="button" aria-pressed="true">ログアウト</a>
+    <input type="text" class="form-control Search-form ms-auto" placeholder="tweetを検索" name="keyword">
+    <button class="btn btn-outline-success" type="submit"><i class="fas fa-search"></i><span>検索</span></button>
+  </form>
 </div>
 
-  <div class="font-bold profile-container d-flex flex-wrap align-items-center">
-    <a href="{% url 'UserPageAtHome' user.id %}" class="me-3" role="button" aria-pressed="true">
-      <img src="{{ user.ProfileImage.url }}" class="user-icon" >
-    </a>
-    {{user.username}}
-    <a href="{% url 'SearchItem' 'Select' %}" class="btn btn-success ms-3" role="button" aria-pressed="true">投稿する</a>
-  </div>
+<div class="font-bold profile-container d-flex flex-wrap align-items-center">
+  <a href="{% url 'UserPageAtHome' user.id %}" class="me-3" role="button" aria-pressed="true">
+    <img src="{{ user.ProfileImage.url }}" class="user-icon">
+  </a>
+  {{user.username}}
+  <a href="{% url 'SearchItem' 'Select' %}" class="btn btn-success ms-3" role="button" aria-pressed="true">投稿する</a>
+</div>
 <!------------------------------------->
 
 <!-- 投稿の一覧 -->
 <div id="tweet_list">
   {% for tweet in tweetmodel_list reversed %}
   <div class="tweet-container container border border-secondary" id="test">
-      <p class="font-bold d-flex">
-        <a href="{% url 'UserPageAtHome' tweet.user.id %}" class="me-3" role="button" aria-pressed="true">
+    <p class="font-bold d-flex">
+      <a href="{% url 'UserPageAtHome' tweet.user.id %}" class="me-3" role="button" aria-pressed="true">
         <img src="{{ tweet.user.ProfileImage.url }}" class="user-icon">
-        </a>
-        {{ tweet.user.username }} 
-      </p>
-     <p class="tweet-text">{{ tweet.content | linebreaksbr }}</p>
-     <div class="d-flex book-container border border-secondary">
-        <img src="{{ tweet.book.imageUrl }}" alt="" class="book-img me-3">
-        <div class="me-auto">
-         <h6><a href="{{ tweet.book.itemUrl }}" class="book-title">{{ tweet.book.title}}</a></h6>
-         <p class="text-primary">{{ tweet.book.author }}</p>
-        </div>
-        <div class="d-flex mt-auto">
-          {% if tweet.book.ISBNcode in finished_book_isbncodes %}
-            <button v-on:click="register_finished_book" name="finish_book_{{ tweet.book.ISBNcode }}" class="finish_book active btn me-1" data-ISBNcode="{{ tweet.book.ISBNcode }}" data-csrf-token="{{csrf_token}}"><i class="fas fa-check"></i> 読んだ</button>
-          {% else %}
-            <button v-on:click="register_finished_book" name="finish_book_{{ tweet.book.ISBNcode }}" class="finish_book btn me-1" data-ISBNcode="{{ tweet.book.ISBNcode }}" data-csrf-token="{{csrf_token}}"><i class="fas fa-check"></i> 読んだ</button>
-          {% endif %}
+      </a>
+      {{ tweet.user.username }}
+    </p>
+    <p class="tweet-text">{{ tweet.content | linebreaksbr }}</p>
+    <div class="d-flex book-container border border-secondary">
+      <img src="{{ tweet.book.imageUrl }}" alt="" class="book-img me-3">
+      <div class="me-auto">
+        <h6><a href="{{ tweet.book.itemUrl }}" class="book-title">{{ tweet.book.title}}</a></h6>
+        <p class="text-primary">{{ tweet.book.author }}</p>
+      </div>
+      <div class="d-flex mt-auto">
+        {% if tweet.book.ISBNcode in finished_book_isbncodes %}
+        <button v-on:click="register_finished_book" name="finish_book_{{ tweet.book.ISBNcode }}"
+          class="finish_book active btn me-1" data-ISBNcode="{{ tweet.book.ISBNcode }}"
+          data-csrf-token="{{csrf_token}}"><i class="fas fa-check"></i> 読んだ</button>
+        {% else %}
+        <button v-on:click="register_finished_book" name="finish_book_{{ tweet.book.ISBNcode }}"
+          class="finish_book btn me-1" data-ISBNcode="{{ tweet.book.ISBNcode }}" data-csrf-token="{{csrf_token}}"><i
+            class="fas fa-check"></i> 読んだ</button>
+        {% endif %}
 
-          {% if tweet.book.ISBNcode in reserved_book_isbncodes %}
-            <button v-on:click="register_reserved_book" name="reserve_book_{{ tweet.book.ISBNcode }}" class="reserve_book active btn ms-auto" data-ISBNcode="{{ tweet.book.ISBNcode }}" data-csrf-token="{{csrf_token}}"><i class="far fa-heart"></i> 読みたい</button>
-          {% else %}
-            <button v-on:click="register_reserved_book" name="reserve_book_{{ tweet.book.ISBNcode }}" class="reserve_book btn ms-auto" data-ISBNcode="{{ tweet.book.ISBNcode }}" data-csrf-token="{{csrf_token}}"><i class="far fa-heart"></i> 読みたい</button>
-          {% endif %}
-        </div>
-     </div>
-    <div class="d-flex"> 
+        {% if tweet.book.ISBNcode in reserved_book_isbncodes %}
+        <button v-on:click="register_reserved_book" name="reserve_book_{{ tweet.book.ISBNcode }}"
+          class="reserve_book active btn ms-auto" data-ISBNcode="{{ tweet.book.ISBNcode }}"
+          data-csrf-token="{{csrf_token}}"><i class="far fa-heart"></i> 読みたい</button>
+        {% else %}
+        <button v-on:click="register_reserved_book" name="reserve_book_{{ tweet.book.ISBNcode }}"
+          class="reserve_book btn ms-auto" data-ISBNcode="{{ tweet.book.ISBNcode }}" data-csrf-token="{{csrf_token}}"><i
+            class="far fa-heart"></i> 読みたい</button>
+        {% endif %}
+      </div>
+    </div>
+    <div class="d-flex">
       <div class="d-flex">
         {% if tweet.id in liked_list %}
-            <button class="like" v-on:click="tweet_like_post" id="tweet_{{tweet.id}}" data-like-id="{{tweet.id}}"><i class="fas fa-lg fa-heart like-after"></i></button>
+        <button class="like" v-on:click="tweet_like_post" id="tweet_{{tweet.id}}" data-like-id="{{tweet.id}}"><i
+            class="fas fa-lg fa-heart like-after"></i></button>
         {% else %}
-            <button class="like" v-on:click="tweet_like_post" id="tweet_{{tweet.id}}" data-like-id="{{tweet.id}}"><i class="far fa-lg fa-heart like-before"></i></button>      
+        <button class="like" v-on:click="tweet_like_post" id="tweet_{{tweet.id}}" data-like-id="{{tweet.id}}"><i
+            class="far fa-lg fa-heart like-before"></i></button>
         {% endif %}
         <p id="tweet_count_{{tweet.id}}" class="count"> {{ tweet.like_set.count }} </p>
       </div>
       {% with ''|center:5 as range %}
-       <div class="stars ms-auto">
+      <div class="stars ms-auto">
         {% for _ in range %}
-         {% if forloop.counter <= tweet.rating %}
-          <span class="star-yellow">★</span>
-         {% else %}
+        {% if forloop.counter <= tweet.rating %} <span class="star-yellow">★</span>
+          {% else %}
           <span class="star-gray">★</span>
-         {% endif %}
-        {% endfor %}
-       </div>
+          {% endif %}
+          {% endfor %}
+      </div>
       {% endwith %}
     </div>
     <hr>
-     <div class="comment">
+    <div class="comment">
       <a href="{% url 'CreateComment' tweet.id %}" class="me-3" role="button" aria-pressed="true">
-       コメント>
+        コメント>
       </a>
-     </div>
+    </div>
   </div>
   {% endfor %}
 </div>
@@ -133,96 +144,96 @@
 
 <!--いいね機能のAjax処理-->
 <script type="text/javascript">
-const TweetListApp=Vue.createApp({
-    data:()=>({
-        like_url:"{% url 'tweet_like' %}",
-        reserve_book_url:"/register-reserved-book/",
-        finish_book_url:"/register-finished-book/",
+  const TweetListApp = Vue.createApp({
+    data: () => ({
+      like_url: "{% url 'tweet_like' %}",
+      reserve_book_url: "/register-reserved-book/",
+      finish_book_url: "/register-finished-book/",
     }),
-    methods:{
-        tweet_like_post:function(event){
-          const headers={
-              'X-Requested-With': 'XMLHttpRequest',
-              'Content-Type':'application / json',
-              'X-CSRFToken':'{{ csrf_token }}'
-          }
-          let like_data={
-            "like_id":event.currentTarget.dataset.likeId,
-          }
-          like_data=JSON.stringify(like_data)
-          axios.post(this.like_url,like_data,{headers:headers})
-          .then(function(res){
-            const target_button=document.getElementById('tweet_'+res.data.like_id);
-            if(res.data.liked){
-              target_button.innerHTML="<i class='fas fa-lg fa-heart like-after'></i>"
-            }else{
-              target_button.innerHTML="<i class='far fa-lg fa-heart like-before'></i>"
-            }
-            target_counter = document.getElementById("tweet_count_"+res.data.like_id);
-            target_counter.innerText=res.data.count
-          })
-          .catch(function(error){
-            console.log(error)
-          })
-        },
-        register_reserved_book:function(event){
-          const headers={
-              'X-Requested-With': 'XMLHttpRequest',
-              'Content-Type':'application / json',
-              'X-CSRFToken':event.currentTarget.dataset.csrfToken,
-          }
-          let data={
-            "ISBNcode":event.currentTarget.dataset.isbncode,
-          }
-          data=JSON.stringify(data)
-          axios.post(this.reserve_book_url,data,{headers:headers})
-          .then(function(res){
-            const target_buttons=document.getElementsByName('reserve_book_'+res.data.ISBNcode);
-            if(res.data.reserved){
-              for(let button of target_buttons){
-                button.classList.add('active')
-              }
-            }else{
-              for(let button of target_buttons){
-                button.classList.remove('active')
-              }
-            }
-          })
-          .catch(function(error){
-            console.log(error)
-          })
-        },
-        register_finished_book:function(event){
-          const headers={
-              'X-Requested-With': 'XMLHttpRequest',
-              'Content-Type':'application / json',
-              'X-CSRFToken':event.currentTarget.dataset.csrfToken,
-          }
-          let data={
-            "ISBNcode":event.currentTarget.dataset.isbncode,
-          }
-          data=JSON.stringify(data)
-          axios.post(this.finish_book_url,data,{headers:headers})
-          .then(function(res){
-            const target_buttons=document.getElementsByName('finish_book_'+res.data.ISBNcode);
-            if(res.data.finished){
-              for(let button of target_buttons){
-                button.classList.add('active')
-              }
-            }else{
-              for(let button of target_buttons){
-                button.classList.remove('active')
-              }
-            }
-          })
-          .catch(function(error){
-            console.log(error)
-          })
+    methods: {
+      tweet_like_post: function (event) {
+        const headers = {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Content-Type': 'application / json',
+          'X-CSRFToken': '{{ csrf_token }}'
         }
+        let like_data = {
+          "like_id": event.currentTarget.dataset.likeId,
+        }
+        like_data = JSON.stringify(like_data)
+        axios.post(this.like_url, like_data, { headers: headers })
+          .then(function (res) {
+            const target_button = document.getElementById('tweet_' + res.data.like_id);
+            if (res.data.liked) {
+              target_button.innerHTML = "<i class='fas fa-lg fa-heart like-after'></i>"
+            } else {
+              target_button.innerHTML = "<i class='far fa-lg fa-heart like-before'></i>"
+            }
+            target_counter = document.getElementById("tweet_count_" + res.data.like_id);
+            target_counter.innerText = res.data.count
+          })
+          .catch(function (error) {
+            console.log(error)
+          })
+      },
+      register_reserved_book: function (event) {
+        const headers = {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Content-Type': 'application / json',
+          'X-CSRFToken': event.currentTarget.dataset.csrfToken,
+        }
+        let data = {
+          "ISBNcode": event.currentTarget.dataset.isbncode,
+        }
+        data = JSON.stringify(data)
+        axios.post(this.reserve_book_url, data, { headers: headers })
+          .then(function (res) {
+            const target_buttons = document.getElementsByName('reserve_book_' + res.data.ISBNcode);
+            if (res.data.reserved) {
+              for (let button of target_buttons) {
+                button.classList.add('active')
+              }
+            } else {
+              for (let button of target_buttons) {
+                button.classList.remove('active')
+              }
+            }
+          })
+          .catch(function (error) {
+            console.log(error)
+          })
+      },
+      register_finished_book: function (event) {
+        const headers = {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Content-Type': 'application / json',
+          'X-CSRFToken': event.currentTarget.dataset.csrfToken,
+        }
+        let data = {
+          "ISBNcode": event.currentTarget.dataset.isbncode,
+        }
+        data = JSON.stringify(data)
+        axios.post(this.finish_book_url, data, { headers: headers })
+          .then(function (res) {
+            const target_buttons = document.getElementsByName('finish_book_' + res.data.ISBNcode);
+            if (res.data.finished) {
+              for (let button of target_buttons) {
+                button.classList.add('active')
+              }
+            } else {
+              for (let button of target_buttons) {
+                button.classList.remove('active')
+              }
+            }
+          })
+          .catch(function (error) {
+            console.log(error)
+          })
+      }
     }
-})
-TweetListApp.config.compilerOptions.delimiters = ['[[', ']]']
-TweetListApp.mount('#tweet_list')
+  })
+  TweetListApp.config.compilerOptions.delimiters = ['[[', ']]']
+  TweetListApp.mount('#tweet_list')
 
 </script>
 {% endblock footer%}

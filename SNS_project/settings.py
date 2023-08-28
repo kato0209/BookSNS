@@ -156,13 +156,13 @@ except ImportError:
 
 if not DEBUG:
     SECRET_KEY = env('SECRET_KEY')
-    ALLOWED_HOSTS = [env('ALLOWED_HOSTS_IP'), env('ALLOWED_HOSTS_DOMAIN'), '127.0.0.1']
+    ALLOWED_HOSTS = [env('ALLOWED_HOSTS_IP'), env('ALLOWED_HOSTS_DOMAIN'), '127.0.0.1','localhost']
     REDIS_URL=env('REDIS_URL')
-    WS_URL='wss://book-sns-0209.com:8443/'
+    WS_URL='wss://kato-aws-server.com:8443/'
     APPLICARIONID=env('APPLICATIONID')
     SENDGRID_API_KEY=env('SENDGRID_API_KEY')
     FROM_EMAIL=env('FROM_EMAIL')
-    Default_image='media/kuma_default'
+    Default_image='media/default_img'
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
     CLOUDINARY_STORAGE  = {
