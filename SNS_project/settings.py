@@ -85,10 +85,10 @@ ASGI_APPLICATION = 'SNS_project.routing.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'djangodb',
-        'USER': 'django',
+        'NAME': 'booksns_db',
+        'USER': 'booksns_user',
         'PASSWORD': env('DATABASES_PASSWORD'),
-        'HOST': '10.0.2.10',
+        'HOST': 'localhost',
         'PORT': '5432',
     }
 }

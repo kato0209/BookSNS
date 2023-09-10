@@ -114,11 +114,15 @@ def password_reset(request):
     token_generator=default_token_generator
 
     if request.method=='GET':
+        print(1111)
+        print(settings.FROM_EMAIL)
         form=password_reset_form()
         context={'form':form}
         return render(request, template_name, context)
     elif request.method=='POST':
         form=password_reset_form(request.POST)
+        print(133)
+        print(settings.FROM_EMAIL)
         if form.is_valid():
             context={
                 'use_https':request.is_secure(),
