@@ -8,7 +8,6 @@
 
 # URL
 https://kato-aws-server.com/  <br>
-※現在サーバー停止中
 
 # 使用技術
 ●Django (Python)<br>
